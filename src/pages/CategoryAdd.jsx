@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, Form, Input } from "antd";
 import BreadcrumbLink from "../components/BreadcrumbLink";
 import ContentLayout from "../components/ContentLayout";
+import { useAddCategoryMutation } from "../service/api.category";
+import { useNavigate } from "react-router-dom";
 const onFinish = (values) => {
   console.log("Success:", values);
 };
@@ -9,9 +11,25 @@ const onFinishFailed = (errorInfo) => {
   console.log("Failed:", errorInfo);
 };
 const CategoryAdd = () => {
+  const [addCategory, { isError, isLoading, isSuccess }] =
+    useAddCategoryMutation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isSuccess) {
+      navigate("/categories");
+    }
+  }, [isSuccess]);
+
+  const onFinish = (values) => {
+    addCategory(values);
+  };
+
   return (
     <>
-      <BreadcrumbLink />
+      <BreadcrumbLink
+        routeList={[{ title: "Category List" }, { title: "Add" }]}
+      />
       <ContentLayout>
         <Form
           name="basic"
@@ -33,7 +51,7 @@ const CategoryAdd = () => {
         >
           <Form.Item
             label="Category name"
-            name="username"
+            name="name"
             rules={[
               {
                 required: true,
@@ -50,7 +68,13 @@ const CategoryAdd = () => {
               span: 16,
             }}
           >
-            <Button type="primary" ghost htmlType="submit">
+            <Button
+              type="primary"
+              style={{ minWidth: 100 }}
+              ghost
+              htmlType="submit"
+              loading={isLoading}
+            >
               Save
             </Button>
           </Form.Item>

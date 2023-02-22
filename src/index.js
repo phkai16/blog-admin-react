@@ -12,8 +12,9 @@ import UserAdd from "./pages/UserAdd";
 import ArticleAdd from "./pages/ArticleAdd";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
-import { ApiProvider } from "@reduxjs/toolkit/dist/query/react";
-import { userApi } from "./service/user.service";
+import ErrorPage from "./pages/ErrorPage";
+import Login from "./pages/Login";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -44,21 +45,20 @@ const router = createBrowserRouter([
         element: <ArticleAdd />,
       },
     ],
-    //   errorElement: <Error />,
-    // },
-    // {
-    //   path: "/login",
-    //   element: <Login />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
   },
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+
 root.render(
   <React.StrictMode>
     <Provider store={store}>
-      <RouterProvider router={router}>
-        <App />
-      </RouterProvider>
+      <RouterProvider router={router}></RouterProvider>
     </Provider>
   </React.StrictMode>
 );

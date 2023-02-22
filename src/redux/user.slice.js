@@ -1,19 +1,29 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  id: "",
-  username: "",
-  password: "",
-  avatar: "",
-  isAdmin: "",
-  createdAt: "",
-  updatedAt: "",
+  // id: null,
+  // username: null,
+  // password: null,
+  // avatar: null,
+  // isAdmin: null,
+  // createdAt: null,
+  // updatedAt: null,
+  token: null,
 };
 
 const userSlice = createSlice({
   name: "user",
-  initialState,
+  initialState: initialState,
   reducers: {
+    setCredentials: (state, action) => {
+      console.log(action.payload);
+      state.token = action.payload.token;
+    },
+    clearCredentials: (state) => {
+      // state.user = null;
+      state.token = null;
+      // localStorage.clear();
+    },
     startEditUser: (state, action) => {
       state.id = action.payload;
     },
@@ -24,5 +34,10 @@ const userSlice = createSlice({
 });
 
 const userReducer = userSlice.reducer;
-export const { startEditUser, cancelEditUser } = userSlice.actions;
+export const {
+  startEditUser,
+  cancelEditUser,
+  setCredentials,
+  clearCredentials,
+} = userSlice.actions;
 export default userReducer;

@@ -1,44 +1,28 @@
 import React, { useState } from "react";
 import { Space, Table, Tag, Button } from "antd";
 import ArticleModal from "./ArticleModal";
-
-const data = [
-  {
-    key: "1",
-    username: "John Brown",
-    title: "Lorem Ipsum",
-    thumbnailImg:
-      "https://images.unsplash.com/photo-1674903745215-0267b9c6baeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHx0b3BpYy1mZWVkfDF8NnNNVmpUTFNrZVF8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=60",
-    description:
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-    categories: ["music"],
-  },
-  {
-    key: "2",
-    username: "Jim Green",
-    title: "Simply Dummy",
-    thumbnailImg:
-      "https://images.unsplash.com/photo-1674674614404-604aad76d8a8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHx0b3BpYy1mZWVkfDI2fDZzTVZqVExTa2VRfHxlbnwwfHx8fA%3D%3D&auto=format&fit=crop&w=500&q=60",
-    description:
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-    categories: ["movie"],
-  },
-  {
-    key: "3",
-    username: "Joe Black",
-    title: "Typesetting Industry",
-    thumbnailImg:
-      "https://images.unsplash.com/photo-1674489450945-af9b6cf9a515?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHx0b3BpYy1mZWVkfDM1fDZzTVZqVExTa2VRfHxlbnwwfHx8fA%3D%3D&auto=format&fit=crop&w=500&q=60",
-    description:
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-    categories: ["sport", "movie"],
-  },
-];
+import { useParams } from "react-router-dom";
+import {
+  useDeleteArticleMutation,
+  useGetAllArticlesQuery,
+} from "../../service/api.article";
 
 const ArticleTable = () => {
   const [open, setOpen] = useState(false);
-  const showModal = () => {
+  const [articleId, setArticleId] = useState(null);
+  const { data, isLoading } = useGetAllArticlesQuery();
+  const [
+    deleteArticle,
+    { isError, isSuccess, isLoading: deleteArticleLoading },
+  ] = useDeleteArticleMutation();
+
+  const showModal = (id) => {
+    setArticleId(id);
     setOpen(true);
+  };
+
+  const handleDelete = (id) => {
+    deleteArticle(id);
   };
   const columns = [
     {
@@ -63,7 +47,9 @@ const ArticleTable = () => {
       title: "Description",
       dataIndex: "description",
       key: "description",
-      render: (text) => <span>{text}</span>,
+      render: (_, text) => {
+        <span>{text}</span>;
+      },
     },
     {
       title: "Categories",
@@ -94,26 +80,44 @@ const ArticleTable = () => {
     {
       title: "Action",
       key: "action",
-      render: (_, record) => (
+      dataIndex: "_id",
+      render: (id) => (
         <Space size="middle">
           <Button
             type="primary"
             ghost
-            onClick={showModal}
-            setOpen={setOpen}
-            open={open}
+            onClick={() => {
+              showModal(id);
+            }}
           >
             Edit
           </Button>
-          <Button danger>Delete</Button>
+          <Button
+            danger
+            loading={deleteArticleLoading}
+            onClick={() => handleDelete(id)}
+          >
+            Delete
+          </Button>
         </Space>
       ),
     },
   ];
   return (
     <>
-      <ArticleModal open={open} setOpen={setOpen} />
-      <Table columns={columns} dataSource={data} />
+      <ArticleModal
+        open={open}
+        setOpen={setOpen}
+        articleId={articleId}
+        setArticleId={setArticleId}
+      />
+      <Table
+        columns={columns}
+        dataSource={data}
+        bordered={true}
+        loading={isLoading}
+        rowKey={(record) => record._id}
+      />
     </>
   );
 };
