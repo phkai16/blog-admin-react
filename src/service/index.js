@@ -1,11 +1,13 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { BASE_URL } from "../utils/globalVariable";
 
 export const baseApi = createApi({
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:5000/api/",
+    baseUrl: `${BASE_URL}/api`,
+    withCredentials: true,
     prepareHeaders: (headers, { getState }) => {
       const token = getState().user.token;
-      console.log(token);
+      console.log("index", token);
 
       if (token) {
         headers.set("token", `Bearer ${token}`);

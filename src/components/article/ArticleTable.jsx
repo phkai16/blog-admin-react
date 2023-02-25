@@ -1,20 +1,20 @@
 import React, { useState } from "react";
-import { Space, Table, Tag, Button } from "antd";
+import { Space, Table, Tag, Button, Input } from "antd";
 import ArticleModal from "./ArticleModal";
-import { useParams } from "react-router-dom";
 import {
   useDeleteArticleMutation,
   useGetAllArticlesQuery,
 } from "../../service/api.article";
+const { Search } = Input;
 
 const ArticleTable = () => {
   const [open, setOpen] = useState(false);
   const [articleId, setArticleId] = useState(null);
+  const [filterInput, setFilterInput] = useState("");
+
   const { data, isLoading } = useGetAllArticlesQuery();
-  const [
-    deleteArticle,
-    { isError, isSuccess, isLoading: deleteArticleLoading },
-  ] = useDeleteArticleMutation();
+  const [deleteArticle, { isLoading: deleteArticleLoading }] =
+    useDeleteArticleMutation();
 
   const showModal = (id) => {
     setArticleId(id);
@@ -47,8 +47,8 @@ const ArticleTable = () => {
       title: "Description",
       dataIndex: "description",
       key: "description",
-      render: (_, text) => {
-        <span>{text}</span>;
+      render: (text) => {
+        return <p>{text.slice(0, 300) + "..."}</p>;
       },
     },
     {
@@ -57,14 +57,14 @@ const ArticleTable = () => {
       dataIndex: "categories",
       render: (_, { categories }) => (
         <>
-          {categories.map((category) => {
+          {categories?.map((category) => {
             let color = category.length > 5 ? "geekblue" : "green";
             if (category === "music") {
               color = "volcano";
             }
             return (
-              <Tag color={color} key={category}>
-                {category.toUpperCase()}
+              <Tag color={color} key={category} className="capitalize">
+                {category}
               </Tag>
             );
           })}
@@ -103,6 +103,17 @@ const ArticleTable = () => {
       ),
     },
   ];
+
+  const filterData = () => {
+    if (filterInput.trim() === "") {
+      return data;
+    }
+    return data.filter(
+      (i) =>
+        i.username.toLowerCase().includes(filterInput.toLowerCase().trim()) ||
+        i.title.toLowerCase().includes(filterInput.toLowerCase().trim())
+    );
+  };
   return (
     <>
       <ArticleModal
@@ -111,12 +122,23 @@ const ArticleTable = () => {
         articleId={articleId}
         setArticleId={setArticleId}
       />
+      <Space className="flex items-end justify-end mb-5">
+        <Search
+          placeholder="Search text..."
+          size="large"
+          style={{ minWidth: 350 }}
+          onSearch={setFilterInput}
+          enterButton
+          allowClear
+        />
+      </Space>
       <Table
         columns={columns}
-        dataSource={data}
+        dataSource={filterData()}
         bordered={true}
         loading={isLoading}
         rowKey={(record) => record._id}
+        pagination={{ pageSize: 10 }}
       />
     </>
   );

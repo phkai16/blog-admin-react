@@ -14,6 +14,7 @@ import { Provider } from "react-redux";
 import { store } from "./redux/store";
 import ErrorPage from "./pages/ErrorPage";
 import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 
 const router = createBrowserRouter([
   {
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
       {
         path: "/articles/add",
         element: <ArticleAdd />,
+      },
+      {
+        path: "/profile",
+        element: <Profile />,
       },
     ],
     errorElement: <ErrorPage />,

@@ -4,40 +4,37 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../service/api.user";
 import { useDispatch, useSelector } from "react-redux";
-import { setCredentials } from "../redux/user.slice";
-import { useCookies } from "react-cookie";
 import { toast } from "react-hot-toast";
+import Cookies from "universal-cookie";
 const Login = () => {
-  const token = useSelector((state) => state.user.token);
-  const [login] = useLoginMutation();
-  const dispatch = useDispatch();
+  const { token, isAuthenticated } = useSelector((state) => state.user);
+  const [login, { isLoading }] = useLoginMutation();
   const navigate = useNavigate();
-  const [cookies, setCookie] = useCookies(["token"]);
+  const cookies = new Cookies();
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
   };
 
   const onFinish = (values) => {
-    console.log(values);
     login(values)
       .unwrap()
       .then((res) => {
-        console.log(res);
-        setCookie("token", res.accessToken, {
+        cookies.set("token", res.accessToken, {
           path: "/",
           expires: new Date(Date.now() + 259200),
         });
       })
       .catch((err) => {
         console.error(err);
-        toast.error("failed to login");
+        toast.error("Failed to login");
       });
   };
+
   useEffect(() => {
-    if (token) {
-      navigate("/");
+    if (isAuthenticated === true) {
+      navigate("/users");
     }
-  }, [token]);
+  }, [isAuthenticated]);
   return (
     <>
       <div className="relative w-screen h-screen">
@@ -52,13 +49,9 @@ const Login = () => {
               width: "500px",
             }}
           >
-            <h1
-              className="mb-10 text-center font-semibold text-blue-600"
-              style={{
-                width: 350,
-              }}
-            >
-              Blog Admin
+            <img src="/logo.png" alt="" className="h-32" />
+            <h1 className="mb-10 text-center font-semibold text-primary w-60">
+              Bloggie Admin
             </h1>
             <Form
               name="basic"
@@ -83,7 +76,7 @@ const Login = () => {
               >
                 <Input
                   size="large"
-                  prefix={<UserOutlined className="site-form-item-icon" />}
+                  prefix={<UserOutlined className="site-form-item-icon mr-4" />}
                   placeholder="Username"
                 />
               </Form.Item>
@@ -100,7 +93,7 @@ const Login = () => {
                 <Input.Password
                   size="large"
                   placeholder="Password"
-                  prefix={<LockOutlined className="site-form-item-icon" />}
+                  prefix={<LockOutlined className="site-form-item-icon mr-4" />}
                 />
               </Form.Item>
 
@@ -109,7 +102,13 @@ const Login = () => {
                   width: 350,
                 }}
               >
-                <Button type="primary" block htmlType="submit" size="large">
+                <Button
+                  type="primary"
+                  block
+                  htmlType="submit"
+                  size="large"
+                  loading={isLoading}
+                >
                   Login
                 </Button>
               </Form.Item>

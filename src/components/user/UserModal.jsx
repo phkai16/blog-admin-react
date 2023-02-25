@@ -3,9 +3,9 @@ import { Modal, Checkbox, Form, Input, Upload, Image, Button } from "antd";
 import { PlusOutlined, LoadingOutlined } from "@ant-design/icons";
 import moment from "moment";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
 import { useGetUserQuery, useUpdateUserMutation } from "../../service/api.user";
 import ListSkeleton from "../ListSkeleton";
+import { BASE_URL } from "../../utils/globalVariable";
 const onFinishFailed = (errorInfo) => {
   console.log("Failed:", errorInfo);
 };
@@ -14,18 +14,17 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [form] = Form.useForm();
-  const { data, isSuccess, isError, isLoading } = useGetUserQuery(userId, {
+  const { data, isSuccess, isLoading } = useGetUserQuery(userId, {
     skip: !userId,
   });
   const [
     updateUser,
     {
       isSuccess: updateUserSuccess,
-      isError: updateUserError,
+
       isLoading: updateUserLoading,
     },
   ] = useUpdateUserMutation();
-  console.log(data);
 
   const handleOk = () => {
     setConfirmLoading(true);
@@ -46,7 +45,7 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
     setLoading(true);
     const formData = new FormData();
     formData.append("image", image);
-    return fetch("http://localhost:5000/api/upload/cloud?image", {
+    return fetch(`${BASE_URL}/api/upload/cloud?image`, {
       method: "POST",
       body: formData,
     }).then((res) => {
@@ -99,17 +98,18 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
   }, [isSuccess, isLoading, userId, updateUserSuccess]);
 
   const onFinish = (values) => {
-    console.log("Success", {
-      ...values,
-      avatar: file !== null ? file : data.avatar,
-      id: userId,
-    });
     updateUser({
       ...values,
       avatar: file !== null ? file : data.avatar,
       id: userId,
-    });
-    handleCancel();
+    })
+      .unwrap()
+
+      .then((res) => {
+        handleCancel();
+        toast.success("User updated!");
+      })
+      .catch((err) => toast.error("Something went wrong..."));
   };
 
   return (
@@ -121,6 +121,23 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
         okText="OK"
         confirmLoading={confirmLoading}
         onCancel={handleCancel}
+        footer={[
+          <Button key="back" onClick={handleCancel}>
+            Cancel
+          </Button>,
+
+          <Button
+            type="primary"
+            style={{ minWidth: 100 }}
+            ghost
+            htmlType="submit"
+            loading={updateUserLoading}
+            disabled={loading}
+            onClick={() => form.submit()}
+          >
+            Save changes
+          </Button>,
+        ]}
       >
         {!isLoading && (
           <Form
@@ -187,7 +204,7 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
             <Form.Item label="Is Admin:" name="isAdmin" valuePropName="checked">
               <Checkbox></Checkbox>
             </Form.Item>
-            <Form.Item
+            {/* <Form.Item
               wrapperCol={{
                 offset: 6,
                 span: 16,
@@ -203,7 +220,7 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
               >
                 Update
               </Button>
-            </Form.Item>
+            </Form.Item> */}
           </Form>
         )}
         {isLoading && <ListSkeleton itemQuantity={1} className="pt-12" />}

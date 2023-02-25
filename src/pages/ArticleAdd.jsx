@@ -6,8 +6,10 @@ import ContentLayout from "../components/ContentLayout";
 import { useNavigate } from "react-router-dom";
 import { useAddArticleMutation } from "../service/api.article";
 import toast from "react-hot-toast";
-import { Select, Space } from "antd";
+import { Select } from "antd";
 import { useGetAllCategoriesQuery } from "../service/api.category";
+import { useGetAllUsersQuery } from "../service/api.user";
+import { BASE_URL } from "../utils/globalVariable";
 
 const { TextArea } = Input;
 const onFinishFailed = (errorInfo) => {
@@ -15,67 +17,28 @@ const onFinishFailed = (errorInfo) => {
 };
 const ArticleAdd = () => {
   const [loading, setLoading] = useState(false);
-  const { data, isLoading: getAllCategoriesLoading } =
+  const { data: categoryList, isLoading: getAllCategoriesLoading } =
     useGetAllCategoriesQuery();
-  const [addArticle, { isError, isLoading, isSuccess }] =
-    useAddArticleMutation();
+  const { data: userList, isLoading: getAllUsersLoading } =
+    useGetAllUsersQuery();
+  const [addArticle, { isLoading, isSuccess }] = useAddArticleMutation();
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
-  let options = [];
-  useEffect(() => {
-    if (isSuccess) {
-      navigate("/articles");
-    }
-  }, [isSuccess]);
-  // categories
-  // const options = [];
-  // for (let i = 10; i < 36; i++) {
-  //   options.push({
-  //     label: i.toString(36) + i,
-  //     value: i.toString(36) + i,
-  //   });
-  // }
-  console.log(data);
 
-  const CATEGORIES = [
-    {
-      _id: "63d8c9613ba58146173ebfef",
-      name: "music",
-      createdAt: "2023-01-31T07:55:13.918Z",
-      updatedAt: "2023-02-16T04:51:11.125Z",
-      __v: 0,
-    },
-    {
-      _id: "63e214c013124543c307f2ef",
-      name: "movie",
-      createdAt: "2023-02-07T09:07:12.601Z",
-      updatedAt: "2023-02-07T09:07:12.601Z",
-      __v: 0,
-    },
-    {
-      _id: "63e214c713124543c307f2f1",
-      name: "sport",
-      createdAt: "2023-02-07T09:07:19.725Z",
-      updatedAt: "2023-02-07T09:07:19.725Z",
-      __v: 0,
-    },
-    {
-      _id: "63edf10191061e954325b1da",
-      name: "animal",
-      createdAt: "2023-02-16T09:01:53.115Z",
-      updatedAt: "2023-02-16T09:01:53.115Z",
-      __v: 0,
-    },
-  ];
-  const handleChange = (categories) => {
+  // categories
+  const CATEGORIES = categoryList || [];
+  const handleChangeCategory = (categories) => {
     console.log(`selected ${categories}`);
   };
+  // username
+  const USERS = userList || [];
+
   // upload
   const handleUpload = (image) => {
     setLoading(true);
     const formData = new FormData();
     formData.append("image", image);
-    return fetch("http://localhost:5000/api/upload/cloud?image", {
+    return fetch(`${BASE_URL}/api/upload/cloud?image`, {
       method: "POST",
       body: formData,
     }).then((res) => {
@@ -90,8 +53,7 @@ const ArticleAdd = () => {
     beforeUpload: async (file) => {
       const uploadedFile = await handleUpload(file);
       if (file) {
-        toast.success("Success Upload Avatar!");
-        // console.log(file);
+        toast.success("Success Upload Thumbnail Image!");
         setFile(uploadedFile);
       } else {
         toast.error("Something went wrong...");
@@ -112,16 +74,22 @@ const ArticleAdd = () => {
       </div>
     </div>
   );
-
+  // submit
   const onFinish = (values) => {
     addArticle({
       ...values,
       thumbnailImg: file,
     });
   };
+
+  useEffect(() => {
+    if (isSuccess) {
+      navigate("/articles");
+    }
+  }, [isSuccess]);
   return (
     <>
-      {/* <BreadcrumbLink link="articles/add" title="Articles Add" /> */}
+      <BreadcrumbLink />
       <ContentLayout>
         <Form
           labelCol={{
@@ -170,28 +138,48 @@ const ArticleAdd = () => {
           >
             <TextArea rows={4} />
           </Form.Item>
-          <Form.Item
-            label="Username"
-            name="username"
-            rules={[
-              {
-                required: true,
-                message: "Please input your username!",
-              },
-            ]}
-          >
-            <Input />
+          <Form.Item label="Username" name="username">
+            <Select
+              showSearch
+              loading={getAllUsersLoading}
+              style={{
+                width: 200,
+              }}
+              placeholder="Search to Author"
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.label ?? "").includes(input)
+              }
+              filterSort={(optionA, optionB) =>
+                (optionA?.label ?? "")
+                  .toLowerCase()
+                  .localeCompare((optionB?.label ?? "").toLowerCase())
+              }
+              options={USERS.map((item) => ({
+                value: item.username,
+                label: item.username,
+              }))}
+              defaultValue={{
+                value: USERS[0]?.username,
+                label: USERS[0]?.username,
+              }}
+            />
           </Form.Item>
+
           <Form.Item label="Categories" name="categories">
             <Select
+              loading={getAllCategoriesLoading}
               mode="multiple"
               placeholder="Inserted are removed"
-              defaultValue={"music"}
-              onChange={handleChange()}
+              defaultValue={CATEGORIES?.slice(0, 2)?.map((item) => ({
+                value: item.name,
+                label: item.name,
+              }))}
+              onChange={handleChangeCategory()}
               style={{
                 width: "100%",
               }}
-              options={CATEGORIES.map((item) => ({
+              options={CATEGORIES?.map((item) => ({
                 value: item.name,
                 label: item.name,
               }))}

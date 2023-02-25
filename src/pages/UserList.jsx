@@ -6,7 +6,7 @@ import UserTable from "../components/user/UserTable";
 const UserList = () => {
   return (
     <>
-      {/* <BreadcrumbLink title="User List" /> */}
+      <BreadcrumbLink />
       <ContentLayout>
         <UserTable />
       </ContentLayout>

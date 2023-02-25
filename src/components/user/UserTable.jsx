@@ -7,18 +7,14 @@ import {
 } from "../../service/api.user";
 
 const { Search } = Input;
-const onSearch = (value) => {
-  console.log(value);
-};
 
 const UserTable = () => {
+  const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState(null);
   const { data, isLoading } = useGetAllUsersQuery();
-  const [open, setOpen] = useState(false);
-  const [
-    deleteUser,
-    { isError, isSuccess: deleteUserSuccess, isLoading: deleteUserLoading },
-  ] = useDeleteUserMutation();
+  const [filterInput, setFilterInput] = useState("");
+  const [deleteUser, { isLoading: deleteUserLoading }] =
+    useDeleteUserMutation();
 
   const showModal = (id) => {
     setUserId(id);
@@ -28,6 +24,15 @@ const UserTable = () => {
   const handleDelete = (id) => {
     console.log(id);
     deleteUser(id);
+  };
+
+  const filterData = () => {
+    if (filterInput.trim() === "") {
+      return data;
+    }
+    return data.filter((i) =>
+      i.username.toLowerCase().includes(filterInput.toLowerCase().trim())
+    );
   };
 
   const columns = [
@@ -102,21 +107,23 @@ const UserTable = () => {
         userId={userId}
         setUserId={setUserId}
       />
-      <Space direction="vertical" className="flex items-end mb-5">
+      <Space className="flex items-end justify-end mb-5">
         <Search
           placeholder="Search text..."
           size="large"
-          style={{ minWidth: 500 }}
-          onSearch={onSearch}
+          style={{ minWidth: 350 }}
+          onSearch={setFilterInput}
           enterButton
+          allowClear
         />
       </Space>
       <Table
         columns={columns}
-        dataSource={data}
+        dataSource={filterData()}
         bordered={true}
         loading={isLoading}
         rowKey={(record) => record._id}
+        pagination={{ pageSize: 5 }}
       />
     </>
   );

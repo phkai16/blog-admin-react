@@ -12,9 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { useSelector, useDispatch } from "react-redux";
 import { useVerifyMutation } from "../service/api.user";
-// import { setCredentials, clearCredentials } from "../redux/user.slice";
-import { useCookies } from "react-cookie";
-import { setCredentials, clearCredentials } from "../redux/user.slice";
+import { clearCredentials, setCredentials } from "../redux/user.slice";
+import Cookies from "universal-cookie";
 
 const { Header, Sider } = Layout;
 function getItem(label, key, icon, children) {
@@ -39,19 +38,22 @@ const keyLink = {
   4: "/categories/add",
   5: "/articles",
   6: "/articles/add",
+  7: "/profile",
 };
 const LayoutGeneral = () => {
-  // const { token } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [verify] = useVerifyMutation();
   const navigate = useNavigate();
-  const [cookies, removeCookie, setCookie] = useCookies(["token"]);
-  const token = useSelector((state) => state.user.token);
+  const cookies = new Cookies();
+
+  const { token, isAuthenticated } = useSelector((state) => state.user);
+  const user = useSelector((state) => state.user);
+  console.log(user);
 
   const handleLogout = () => {
-    removeCookie("token");
+    cookies.remove("token");
     dispatch(clearCredentials());
-    // navigate("/login");
+    // dispatch(clearUserInfo());
   };
 
   const handleNavigate = (number) => {
@@ -60,33 +62,37 @@ const LayoutGeneral = () => {
   const {
     token: { colorBgContainer },
   } = theme.useToken();
+
   useEffect(() => {
-    if (!token) {
+    if (isAuthenticated === false) {
       navigate("/login");
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (token) {
       verify()
         .unwrap()
         .then((data) => {
-          setCookie("token", data.accessToken, {
+          cookies.set("token", data.accessToken, {
             path: "/",
             expires: new Date(Date.now() + 259200),
           });
-          dispatch(
-            setCredentials({
-              token: data.accessToken,
-            })
-          );
+          console.log("layout", data);
         })
         .catch((rejected) => {
           console.error(rejected);
           handleLogout();
         });
+    } else {
+      const cookieToken = cookies.get("token");
+      if (cookieToken) {
+        dispatch(setCredentials({ accessToken: cookieToken }));
+      } else {
+        handleLogout();
+      }
     }
-  }, []);
+  }, [token]);
 
   const items2 = [
     getItem("User", "sub1", <UserOutlined />, [
@@ -112,16 +118,49 @@ const LayoutGeneral = () => {
   ];
   return (
     <Layout className="max-w-screen min-h-screen">
-      <Header className="header flex justify-between items-center">
+      <Header
+        className="header flex justify-between items-center"
+        style={{ paddingInline: "24px", height: "80px" }}
+      >
         <Link to="/users">
-          <div className="text-white text-2xl font-semibold">Blog Admin</div>
+          <div className="flex items-center justify-center">
+            <img src="/logo.png" alt="" className="h-8" />
+            <h2 className="text-white text-xl font-semibold] mb-0">
+              Bloggie Admin
+            </h2>
+          </div>
         </Link>
-        <Menu
-          theme="dark"
-          mode="horizontal"
-          items={items1}
-          onClick={(e) => handleNavigate(e.key)}
-        />
+
+        <div className="flex items-center">
+          <Link to="/profile">
+            {user.avatar && (
+              <img
+                class="w-10 h-10 rounded-full"
+                src={user.avatar}
+                alt="Rounded avatar"
+              ></img>
+            )}
+            {!user.avatar && (
+              <div class="relative w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
+                <svg
+                  class="absolute w-12 h-12 text-gray-400 -left-1"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+              </div>
+            )}
+          </Link>
+          <p className="text-white ml-2 mb-0 capitalize">
+            Welcome, {user.username}
+          </p>
+        </div>
       </Header>
       <Layout>
         <Sider

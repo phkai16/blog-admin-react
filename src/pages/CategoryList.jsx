@@ -6,7 +6,7 @@ import ContentLayout from "../components/ContentLayout";
 const CategoryList = () => {
   return (
     <>
-      {/* <BreadcrumbLink link="categories" title="Category List" /> */}
+      <BreadcrumbLink />
       <ContentLayout>
         <CategoryTable />
       </ContentLayout>

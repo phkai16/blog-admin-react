@@ -1,43 +1,62 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { endpoints } from "../service/api.user";
 
 const initialState = {
-  // id: null,
-  // username: null,
-  // password: null,
-  // avatar: null,
-  // isAdmin: null,
-  // createdAt: null,
-  // updatedAt: null,
+  id: null,
+  username: null,
+  email: null,
+  avatar: null,
+  isAdmin: null,
   token: null,
+  isAuthenticated: null,
 };
 
 const userSlice = createSlice({
   name: "user",
   initialState: initialState,
   reducers: {
-    setCredentials: (state, action) => {
-      console.log(action.payload);
-      state.token = action.payload.token;
-    },
     clearCredentials: (state) => {
-      // state.user = null;
       state.token = null;
-      // localStorage.clear();
+      state.isAuthenticated = false;
     },
-    startEditUser: (state, action) => {
-      state.id = action.payload;
+    setCredentials: (state, action) => {
+      state.token = action.payload.accessToken;
+      state.isAuthenticated = true;
     },
-    cancelEditUser: (state) => {
-      state.id = "";
+    updateProfile: (state, { payload }) => {
+      state.username = payload.username;
+      state.email = payload.email;
+      state.avatar = payload.avatar;
+      state.isAdmin = payload.isAdmin;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addMatcher(endpoints.login.matchFulfilled, (state, { payload }) => {
+        state.token = payload.accessToken;
+        state.isAuthenticated = true;
+
+        state.id = payload._id;
+        state.username = payload.username;
+        state.email = payload.email;
+        state.avatar = payload.avatar;
+        state.isAdmin = payload.isAdmin;
+      })
+      .addMatcher(endpoints.verify.matchFulfilled, (state, { payload }) => {
+        console.log(payload);
+        state.isAuthenticated = true;
+        state.token = payload.accessToken;
+
+        state.id = payload._id;
+        state.username = payload.username;
+        state.email = payload.email;
+        state.avatar = payload.avatar;
+        state.isAdmin = payload.isAdmin;
+      });
   },
 });
 
 const userReducer = userSlice.reducer;
-export const {
-  startEditUser,
-  cancelEditUser,
-  setCredentials,
-  clearCredentials,
-} = userSlice.actions;
+export const { setCredentials, clearCredentials, updateProfile } =
+  userSlice.actions;
 export default userReducer;

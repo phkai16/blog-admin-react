@@ -9,7 +9,6 @@ import {
 const CategoryTable = () => {
   const [open, setOpen] = useState(false);
   const [categoryId, setCategoryId] = useState(null);
-
   const { data, isLoading } = useGetAllCategoriesQuery();
   const [
     deleteCategory,
@@ -25,18 +24,21 @@ const CategoryTable = () => {
     console.log(id);
     deleteCategory(id);
   };
-  console.log("table", categoryId);
+
   const columns = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
+      render: (_, item) => {
+        return <span>{data.indexOf(item) + 1}</span>;
+      },
     },
     {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      render: (text) => <span>{text}</span>,
+      render: (text) => <span className="capitalize">{text}</span>,
     },
 
     {
@@ -65,6 +67,7 @@ const CategoryTable = () => {
       ),
     },
   ];
+
   return (
     <>
       <CategoryModal
@@ -79,6 +82,7 @@ const CategoryTable = () => {
         bordered={true}
         rowKey={(record) => record._id}
         loading={isLoading}
+        pagination={{ pageSize: 10 }}
       />
     </>
   );

@@ -27,9 +27,7 @@ const CategoryAdd = () => {
 
   return (
     <>
-      <BreadcrumbLink
-        routeList={[{ title: "Category List" }, { title: "Add" }]}
-      />
+      <BreadcrumbLink />
       <ContentLayout>
         <Form
           name="basic"

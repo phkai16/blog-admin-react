@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { PlusOutlined, LoadingOutlined } from "@ant-design/icons";
-import { Form, Input, Upload, Modal, Image, Button } from "antd";
+import { Form, Input, Upload, Modal, Image, Button, Select } from "antd";
 import { useState } from "react";
 import {
   useGetArticleQuery,
@@ -8,7 +8,9 @@ import {
 } from "../../service/api.article";
 import moment from "moment";
 import toast from "react-hot-toast";
-import { useUpdateCategoryMutation } from "../../service/api.category";
+import { useGetAllCategoriesQuery } from "../../service/api.category";
+import { useGetAllUsersQuery } from "../../service/api.user";
+import { BASE_URL } from "../../utils/globalVariable";
 
 const { TextArea } = Input;
 const onFinishFailed = (errorInfo) => {
@@ -19,18 +21,15 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
-  const { data, isSuccess, isError, isLoading } = useGetArticleQuery(
-    articleId,
-    { skip: !articleId }
-  );
-  const [
-    updateArticle,
-    {
-      isSuccess: updateArticleSuccess,
-      isError: updateArticleError,
-      isLoading: updateArticleLoading,
-    },
-  ] = useUpdateArticleMutation();
+  const { data: categoryList, isLoading: getAllCategoriesLoading } =
+    useGetAllCategoriesQuery();
+  const { data: userList, isLoading: getAllUsersLoading } =
+    useGetAllUsersQuery();
+  const { data, isSuccess, isLoading } = useGetArticleQuery(articleId, {
+    skip: !articleId,
+  });
+  const [updateArticle, { isLoading: updateArticleLoading }] =
+    useUpdateArticleMutation();
   const handleOk = () => {
     setConfirmLoading(true);
     setTimeout(() => {
@@ -43,12 +42,19 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
     setArticleId(null);
     setOpen(false);
   };
+  // categories
+  const CATEGORIES = categoryList;
+  const handleChangeCategory = (categories) => {
+    console.log(`selected ${categories}`);
+  };
+  // users
+  const USERS = userList;
   // upload
   const handleUpload = (image) => {
     setLoading(true);
     const formData = new FormData();
     formData.append("image", image);
-    return fetch("http://localhost:5000/api/upload/cloud?image", {
+    return fetch(`${BASE_URL}/api/upload/cloud?image`, {
       method: "POST",
       body: formData,
     }).then((res) => {
@@ -63,7 +69,7 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
     beforeUpload: async (file) => {
       const uploadedFile = await handleUpload(file);
       if (file) {
-        toast.success("Success Upload Thumbnail Image!");
+        toast.success("Success Upload Avatar!");
         setFile(uploadedFile);
       } else {
         toast.error("Something went wrong...");
@@ -84,6 +90,16 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
       </div>
     </div>
   );
+  // submit
+  const onFinish = (values) => {
+    updateArticle({
+      ...values,
+      thumbnailImg: file !== null ? file : data.thumbnailImg,
+      id: articleId,
+    });
+    handleCancel();
+  };
+
   useEffect(() => {
     if (isSuccess) {
       form.setFieldsValue({
@@ -95,23 +111,14 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
         username: data.username,
         created: moment(data.createdAt).format("MMM Do YY").toString(),
         updated: moment(data.updatedAt).format("MMM Do YY").toString(),
+        categories: data.categories?.map((item) => ({
+          value: item,
+          label: item,
+        })),
       });
     }
   }, [isSuccess, isLoading, articleId]);
-  console.log(data);
-  const onFinish = (values) => {
-    console.log("Success", {
-      ...values,
-      thumbnailImg: file !== null ? file : data.thumbnailImg,
-      id: articleId,
-    });
-    updateArticle({
-      ...values,
-      thumbnailImg: file !== null ? file : data.thumbnailImg,
-      id: articleId,
-    });
-    handleCancel();
-  };
+
   return (
     <>
       <Modal
@@ -120,16 +127,17 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
         onOk={handleOk}
         confirmLoading={confirmLoading}
         onCancel={handleCancel}
+        width={700}
       >
         <Form
           labelCol={{
-            span: 6,
+            span: 4,
           }}
           wrapperCol={{
             span: 16,
           }}
           layout="horizontal"
-          className="w-100"
+          className="w-100 my-10"
           form={form}
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
@@ -168,17 +176,43 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
           >
             <TextArea rows={4} />
           </Form.Item>
-          <Form.Item
-            label="Username"
-            name="username"
-            rules={[
-              {
-                required: true,
-                message: "Please input your username!",
-              },
-            ]}
-          >
-            <Input />
+          <Form.Item label="Categories" name="categories">
+            <Select
+              loading={getAllCategoriesLoading}
+              mode="multiple"
+              placeholder="Inserted are removed"
+              onChange={handleChangeCategory()}
+              style={{
+                width: "100%",
+              }}
+              options={CATEGORIES?.map((item) => ({
+                value: item.name,
+                label: item.name,
+              }))}
+            />
+          </Form.Item>
+          <Form.Item label="Username" name="username">
+            <Select
+              showSearch
+              loading={getAllUsersLoading}
+              style={{
+                width: 200,
+              }}
+              placeholder="Search to Author"
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.label ?? "").includes(input)
+              }
+              filterSort={(optionA, optionB) =>
+                (optionA?.label ?? "")
+                  .toLowerCase()
+                  .localeCompare((optionB?.label ?? "").toLowerCase())
+              }
+              options={USERS?.map((item) => ({
+                value: item.username,
+                label: item.username,
+              }))}
+            />
           </Form.Item>
           <Form.Item label="Created At:" name="created">
             <Input disabled={true} />
@@ -188,13 +222,13 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
           </Form.Item>
           <Form.Item
             wrapperCol={{
-              offset: 6,
+              offset: 4,
               span: 16,
             }}
           >
             <Button
               type="primary"
-              style={{ minWidth: 100 }}
+              style={{ minWidth: 120 }}
               ghost
               htmlType="submit"
               loading={updateArticleLoading}

@@ -1,7 +1,7 @@
 import { baseApi } from ".";
 import toast from "react-hot-toast";
-import { setCredentials } from "../redux/user.slice";
-// import { setCredentials } from "../redux/user.slice";
+import { setCredentials, setUserInfo } from "../redux/user.slice";
+import { useDispatch } from "react-redux";
 
 const userApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -36,19 +36,6 @@ const userApi = baseApi.injectEndpoints({
         method: "POST",
         body: body,
       }),
-      async onQueryStarted({ id, ...patch }, { dispatch, queryFulfilled }) {
-        try {
-          const res = await queryFulfilled;
-          console.log(res.data.accessToken);
-          dispatch(
-            setCredentials({
-              token: res.data.accessToken,
-            })
-          );
-        } catch (err) {
-          console.log(err);
-        }
-      },
     }),
     verify: build.mutation({
       query: () => ({
@@ -63,15 +50,6 @@ const userApi = baseApi.injectEndpoints({
         body: data,
       }),
       invalidatesTags: ["User"],
-      transformResponse: (response, meta, arg) => {
-        toast.success("User updated!");
-        return response.data;
-      },
-      transformErrorResponse: (response, meta, arg) => {
-        console.log(response);
-        toast.error("Something went wrong...");
-        return response.status;
-      },
     }),
     deleteUser: build.mutation({
       query: (id) => ({
@@ -101,4 +79,5 @@ export const {
   useDeleteUserMutation,
   useLoginMutation,
   useVerifyMutation,
+  endpoints,
 } = userApi;

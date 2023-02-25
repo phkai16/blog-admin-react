@@ -6,13 +6,14 @@ import ContentLayout from "../components/ContentLayout";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAddUserMutation } from "../service/api.user";
+import { BASE_URL } from "../utils/globalVariable";
 
 const onFinishFailed = (errorInfo) => {
   console.log("Failed:", errorInfo);
 };
 const UserAdd = () => {
   const [loading, setLoading] = useState(false);
-  const [addUser, { isError, isLoading, isSuccess }] = useAddUserMutation();
+  const [addUser, { isLoading, isSuccess }] = useAddUserMutation();
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
   useEffect(() => {
@@ -29,7 +30,7 @@ const UserAdd = () => {
     //   console.log(value);
     // }
 
-    return fetch("http://localhost:5000/api/upload/cloud?image", {
+    return fetch(`${BASE_URL}/api/upload/cloud?image`, {
       method: "POST",
       body: formData,
     }).then((res) => {
@@ -80,7 +81,7 @@ const UserAdd = () => {
 
   return (
     <>
-      {/* <BreadcrumbLink link="users/add" title="User Add" /> */}
+      <BreadcrumbLink />
       <ContentLayout>
         <Form
           labelCol={{
