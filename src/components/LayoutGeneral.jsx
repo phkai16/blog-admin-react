@@ -25,12 +25,6 @@ function getItem(label, key, icon, children) {
   };
 }
 
-const items1 = [
-  getItem("User", "1"),
-  getItem("Category", "3"),
-  getItem("Article", "5"),
-];
-
 const keyLink = {
   1: "/users",
   2: "/users/add",
@@ -49,11 +43,10 @@ const LayoutGeneral = () => {
   const { token, isAuthenticated } = useSelector((state) => state.user);
   const user = useSelector((state) => state.user);
   console.log(user);
-
+  console.log(new Date(Date.now() + 259200));
   const handleLogout = () => {
-    cookies.remove("token");
+    cookies.remove("token", { path: "/" });
     dispatch(clearCredentials());
-    // dispatch(clearUserInfo());
   };
 
   const handleNavigate = (number) => {
@@ -76,9 +69,10 @@ const LayoutGeneral = () => {
         .then((data) => {
           cookies.set("token", data.accessToken, {
             path: "/",
-            expires: new Date(Date.now() + 259200),
+            expires: new Date(
+              new Date(new Date()).setDate(new Date().getDate() + 3)
+            ),
           });
-          console.log("layout", data);
         })
         .catch((rejected) => {
           console.error(rejected);
@@ -164,7 +158,7 @@ const LayoutGeneral = () => {
       </Header>
       <Layout>
         <Sider
-          width={200}
+          width={210}
           style={{
             background: colorBgContainer,
           }}

@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { useGetAllCategoriesQuery } from "../../service/api.category";
 import { useGetAllUsersQuery } from "../../service/api.user";
 import { BASE_URL } from "../../utils/globalVariable";
+import ListSkeleton from "../ListSkeleton";
 
 const { TextArea } = Input;
 const onFinishFailed = (errorInfo) => {
@@ -18,7 +19,6 @@ const onFinishFailed = (errorInfo) => {
 };
 const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
   const [form] = Form.useForm();
-  const [confirmLoading, setConfirmLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
   const { data: categoryList, isLoading: getAllCategoriesLoading } =
@@ -30,25 +30,22 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
   });
   const [updateArticle, { isLoading: updateArticleLoading }] =
     useUpdateArticleMutation();
-  const handleOk = () => {
-    setConfirmLoading(true);
-    setTimeout(() => {
-      setOpen(false);
-      setConfirmLoading(false);
-    });
-  };
+
   const handleCancel = () => {
     form.resetFields();
     setArticleId(null);
     setOpen(false);
   };
+
   // categories
   const CATEGORIES = categoryList;
   const handleChangeCategory = (categories) => {
     console.log(`selected ${categories}`);
   };
+
   // users
   const USERS = userList;
+
   // upload
   const handleUpload = (image) => {
     setLoading(true);
@@ -90,6 +87,7 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
       </div>
     </div>
   );
+
   // submit
   const onFinish = (values) => {
     updateArticle({
@@ -108,136 +106,144 @@ const ArticleModal = ({ setOpen, open, articleId, setArticleId }) => {
         articlePic:
           data.thumbnailImg ||
           "https://vnpi-hcm.vn/wp-content/uploads/2018/01/no-image-800x600.png",
-        username: data.username,
         created: moment(data.createdAt).format("MMM Do YY").toString(),
         updated: moment(data.updatedAt).format("MMM Do YY").toString(),
-        categories: data.categories?.map((item) => ({
-          value: item,
-          label: item,
-        })),
+        username: data.username,
+        categories: data.categories?.map((item) => item),
       });
     }
-  }, [isSuccess, isLoading, articleId]);
+  }, [
+    isSuccess,
+    isLoading,
+    articleId,
+    getAllCategoriesLoading,
+    getAllUsersLoading,
+  ]);
 
   return (
     <>
       <Modal
         title="Article Details"
         open={open}
-        onOk={handleOk}
-        confirmLoading={confirmLoading}
         onCancel={handleCancel}
         width={700}
+        footer={[
+          <Button key="back" onClick={handleCancel}>
+            Cancel
+          </Button>,
+
+          <Button
+            type="primary"
+            style={{ minWidth: 100 }}
+            ghost
+            htmlType="submit"
+            loading={updateArticleLoading}
+            disabled={loading}
+            onClick={() => form.submit()}
+          >
+            Save changes
+          </Button>,
+        ]}
       >
-        <Form
-          labelCol={{
-            span: 4,
-          }}
-          wrapperCol={{
-            span: 16,
-          }}
-          layout="horizontal"
-          className="w-100 my-10"
-          form={form}
-          onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
-        >
-          <div className="flex ml-6 gap-5">
-            <Form.Item name="articlePic" valuePropName="src">
-              <Image width={200} height={100} style={{ objectFit: "cover" }} />
-            </Form.Item>
-            <Form.Item name="thumbnailImg" valuePropName="file">
-              <Upload {...props} maxCount={1} listType="picture-card">
-                {uploadButton}
-              </Upload>
-            </Form.Item>
-          </div>
-          <Form.Item
-            label="Title"
-            name="title"
-            rules={[
-              {
-                required: true,
-                message: "Please input your article's title!",
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Description:"
-            name="description"
-            rules={[
-              {
-                required: true,
-                message: "Please input your article's description!",
-              },
-            ]}
-          >
-            <TextArea rows={4} />
-          </Form.Item>
-          <Form.Item label="Categories" name="categories">
-            <Select
-              loading={getAllCategoriesLoading}
-              mode="multiple"
-              placeholder="Inserted are removed"
-              onChange={handleChangeCategory()}
-              style={{
-                width: "100%",
-              }}
-              options={CATEGORIES?.map((item) => ({
-                value: item.name,
-                label: item.name,
-              }))}
-            />
-          </Form.Item>
-          <Form.Item label="Username" name="username">
-            <Select
-              showSearch
-              loading={getAllUsersLoading}
-              style={{
-                width: 200,
-              }}
-              placeholder="Search to Author"
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                (option?.label ?? "").includes(input)
-              }
-              filterSort={(optionA, optionB) =>
-                (optionA?.label ?? "")
-                  .toLowerCase()
-                  .localeCompare((optionB?.label ?? "").toLowerCase())
-              }
-              options={USERS?.map((item) => ({
-                value: item.username,
-                label: item.username,
-              }))}
-            />
-          </Form.Item>
-          <Form.Item label="Created At:" name="created">
-            <Input disabled={true} />
-          </Form.Item>
-          <Form.Item label="Update At:" name="updated">
-            <Input disabled={true} />
-          </Form.Item>
-          <Form.Item
+        {!isLoading && (
+          <Form
+            labelCol={{
+              span: 4,
+            }}
             wrapperCol={{
-              offset: 4,
               span: 16,
             }}
+            layout="horizontal"
+            className="w-100 my-10"
+            form={form}
+            onFinish={onFinish}
+            onFinishFailed={onFinishFailed}
           >
-            <Button
-              type="primary"
-              style={{ minWidth: 120 }}
-              ghost
-              htmlType="submit"
-              loading={updateArticleLoading}
-              disabled={loading}
+            <div className="flex ml-6 gap-5">
+              <Form.Item name="articlePic" valuePropName="src">
+                <Image
+                  width={200}
+                  height={100}
+                  style={{ objectFit: "cover" }}
+                />
+              </Form.Item>
+              <Form.Item name="thumbnailImg" valuePropName="file">
+                <Upload {...props} maxCount={1} listType="picture-card">
+                  {uploadButton}
+                </Upload>
+              </Form.Item>
+            </div>
+            <Form.Item
+              label="Title"
+              name="title"
+              rules={[
+                {
+                  required: true,
+                  message: "Please input your article's title!",
+                },
+              ]}
             >
-              Update
-            </Button>
-          </Form.Item>
-        </Form>
+              <Input />
+            </Form.Item>
+            <Form.Item
+              label="Description:"
+              name="description"
+              rules={[
+                {
+                  required: true,
+                  message: "Please input your article's description!",
+                },
+              ]}
+            >
+              <TextArea rows={4} />
+            </Form.Item>
+            <Form.Item label="Categories" name="categories">
+              <Select
+                loading={getAllCategoriesLoading}
+                mode="multiple"
+                placeholder="Inserted are removed"
+                onChange={handleChangeCategory()}
+                style={{
+                  width: "100%",
+                }}
+                options={CATEGORIES?.map((item) => ({
+                  value: item.name,
+                  label: item.name,
+                }))}
+              />
+            </Form.Item>
+            <Form.Item label="Username" name="username">
+              <Select
+                showSearch
+                loading={getAllUsersLoading}
+                style={{
+                  width: 200,
+                }}
+                placeholder="Search to Author"
+                optionFilterProp="children"
+                filterOption={(input, option) =>
+                  (option?.label ?? "").includes(input)
+                }
+                filterSort={(optionA, optionB) =>
+                  (optionA?.label ?? "")
+                    .toLowerCase()
+                    .localeCompare((optionB?.label ?? "").toLowerCase())
+                }
+                options={USERS?.map((item) => ({
+                  value: item.username,
+                  label: item.username,
+                }))}
+              />
+            </Form.Item>
+            <Form.Item label="Created At:" name="created">
+              <Input disabled />
+            </Form.Item>
+            <Form.Item label="Update At:" name="updated">
+              <Input disabled />
+            </Form.Item>
+          </Form>
+        )}
+        {isLoading && <ListSkeleton itemQuantity={1} className="pt-12" />}
       </Modal>
     </>
   );

@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { Space, Table, Button } from "antd";
+import { Space, Table, Button, Input } from "antd";
 import CategoryModal from "./CategoryModal";
 import {
   useDeleteCategoryMutation,
   useGetAllCategoriesQuery,
 } from "../../service/api.category";
+const { Search } = Input;
 
 const CategoryTable = () => {
   const [open, setOpen] = useState(false);
   const [categoryId, setCategoryId] = useState(null);
+  const [filterInput, setFilterInput] = useState("");
   const { data, isLoading } = useGetAllCategoriesQuery();
   const [
     deleteCategory,
@@ -23,6 +25,15 @@ const CategoryTable = () => {
   const handleDelete = (id) => {
     console.log(id);
     deleteCategory(id);
+  };
+
+  const filterData = () => {
+    if (filterInput.trim() === "") {
+      return data;
+    }
+    return data.filter((i) =>
+      i.name.toLowerCase().includes(filterInput.toLowerCase().trim())
+    );
   };
 
   const columns = [
@@ -76,9 +87,19 @@ const CategoryTable = () => {
         categoryId={categoryId}
         setCategoryId={setCategoryId}
       />
+      <Space className="flex items-end justify-end mb-5">
+        <Search
+          placeholder="Search text..."
+          size="large"
+          style={{ minWidth: 350 }}
+          onSearch={setFilterInput}
+          enterButton
+          allowClear
+        />
+      </Space>
       <Table
         columns={columns}
-        dataSource={data}
+        dataSource={filterData()}
         bordered={true}
         rowKey={(record) => record._id}
         loading={isLoading}

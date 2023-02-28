@@ -10,7 +10,6 @@ const onFinishFailed = (errorInfo) => {
   console.log("Failed:", errorInfo);
 };
 const UserModal = ({ setOpen, open, userId, setUserId }) => {
-  const [confirmLoading, setConfirmLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [form] = Form.useForm();
@@ -19,20 +18,8 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
   });
   const [
     updateUser,
-    {
-      isSuccess: updateUserSuccess,
-
-      isLoading: updateUserLoading,
-    },
+    { isSuccess: updateUserSuccess, isLoading: updateUserLoading },
   ] = useUpdateUserMutation();
-
-  const handleOk = () => {
-    setConfirmLoading(true);
-    setTimeout(() => {
-      setOpen(false);
-      setConfirmLoading(false);
-    });
-  };
 
   const handleCancel = () => {
     form.resetFields();
@@ -82,6 +69,23 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
     </div>
   );
 
+  const onFinish = (values) => {
+    updateUser({
+      ...values,
+      avatar: file !== null ? file : data.avatar,
+      id: userId,
+    })
+      .unwrap()
+      .then((res) => {
+        toast.success("User updated!");
+        handleCancel();
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Something went wrong...");
+      });
+  };
+
   useEffect(() => {
     if (isSuccess) {
       form.setFieldsValue({
@@ -95,31 +99,14 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
         updated: moment(data.updatedAt).format("MMM Do YY").toString(),
       });
     }
-  }, [isSuccess, isLoading, userId, updateUserSuccess]);
-
-  const onFinish = (values) => {
-    updateUser({
-      ...values,
-      avatar: file !== null ? file : data.avatar,
-      id: userId,
-    })
-      .unwrap()
-
-      .then((res) => {
-        handleCancel();
-        toast.success("User updated!");
-      })
-      .catch((err) => toast.error("Something went wrong..."));
-  };
+  }, [isSuccess, isLoading, userId]);
 
   return (
     <>
       <Modal
         title="User Details"
         open={open}
-        onOk={handleOk}
         okText="OK"
-        confirmLoading={confirmLoading}
         onCancel={handleCancel}
         footer={[
           <Button key="back" onClick={handleCancel}>
@@ -151,7 +138,7 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
             style={{
               maxWidth: 600,
             }}
-            className="pt-12"
+            className="pt-8"
             form={form}
             onFinish={onFinish}
             onFinishFailed={onFinishFailed}
@@ -195,32 +182,15 @@ const UserModal = ({ setOpen, open, userId, setUserId }) => {
               <Input />
             </Form.Item>
             <Form.Item label="Created At:" name="created">
-              <Input disabled={true} />
+              <Input disabled />
             </Form.Item>
             <Form.Item label="Update At:" name="updated">
-              <Input disabled={true} />
+              <Input disabled />
             </Form.Item>
 
             <Form.Item label="Is Admin:" name="isAdmin" valuePropName="checked">
               <Checkbox></Checkbox>
             </Form.Item>
-            {/* <Form.Item
-              wrapperCol={{
-                offset: 6,
-                span: 16,
-              }}
-            >
-              <Button
-                type="primary"
-                style={{ minWidth: 100 }}
-                ghost
-                htmlType="submit"
-                loading={updateUserLoading}
-                disabled={loading}
-              >
-                Update
-              </Button>
-            </Form.Item> */}
           </Form>
         )}
         {isLoading && <ListSkeleton itemQuantity={1} className="pt-12" />}

@@ -30,8 +30,10 @@ const UserTable = () => {
     if (filterInput.trim() === "") {
       return data;
     }
-    return data.filter((i) =>
-      i.username.toLowerCase().includes(filterInput.toLowerCase().trim())
+    return data.filter(
+      (i) =>
+        i.username.toLowerCase().includes(filterInput.toLowerCase().trim()) ||
+        i.email.toLowerCase().includes(filterInput.toLowerCase().trim())
     );
   };
 
@@ -109,7 +111,7 @@ const UserTable = () => {
       />
       <Space className="flex items-end justify-end mb-5">
         <Search
-          placeholder="Search text..."
+          placeholder="Search by username or email..."
           size="large"
           style={{ minWidth: 350 }}
           onSearch={setFilterInput}

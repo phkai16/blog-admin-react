@@ -1,18 +1,20 @@
 import React, { useState } from "react";
-import { Space, Table, Tag, Button, Input } from "antd";
+import { Space, Table, Tag, Button, Input, Select } from "antd";
 import ArticleModal from "./ArticleModal";
 import {
   useDeleteArticleMutation,
   useGetAllArticlesQuery,
 } from "../../service/api.article";
+import { useGetAllCategoriesQuery } from "../../service/api.category";
 const { Search } = Input;
 
 const ArticleTable = () => {
   const [open, setOpen] = useState(false);
   const [articleId, setArticleId] = useState(null);
   const [filterInput, setFilterInput] = useState("");
-
   const { data, isLoading } = useGetAllArticlesQuery();
+  const { data: categoryList, isLoading: getAllCategoriesLoading } =
+    useGetAllCategoriesQuery();
   const [deleteArticle, { isLoading: deleteArticleLoading }] =
     useDeleteArticleMutation();
 
@@ -24,6 +26,7 @@ const ArticleTable = () => {
   const handleDelete = (id) => {
     deleteArticle(id);
   };
+
   const columns = [
     {
       title: "Thumbnail",
@@ -111,9 +114,16 @@ const ArticleTable = () => {
     return data.filter(
       (i) =>
         i.username.toLowerCase().includes(filterInput.toLowerCase().trim()) ||
-        i.title.toLowerCase().includes(filterInput.toLowerCase().trim())
+        i.title.toLowerCase().includes(filterInput.toLowerCase().trim()) ||
+        i.categories.includes(filterInput.toLowerCase().trim())
     );
   };
+
+  const CATEGORIES = categoryList || [];
+  const handleChange = (value) => {
+    setFilterInput(value);
+  };
+
   return (
     <>
       <ArticleModal
@@ -122,9 +132,20 @@ const ArticleTable = () => {
         articleId={articleId}
         setArticleId={setArticleId}
       />
-      <Space className="flex items-end justify-end mb-5">
+      <Space className="flex items-center justify-between mb-5">
+        <Select
+          loading={getAllCategoriesLoading}
+          defaultValue="Choose category"
+          style={{ minWidth: 150 }}
+          size={"large"}
+          onChange={handleChange}
+          options={CATEGORIES?.map((item) => ({
+            value: item.name,
+            label: item.name,
+          }))}
+        />
         <Search
-          placeholder="Search text..."
+          placeholder="Search by title or username..."
           size="large"
           style={{ minWidth: 350 }}
           onSearch={setFilterInput}
@@ -138,7 +159,7 @@ const ArticleTable = () => {
         bordered={true}
         loading={isLoading}
         rowKey={(record) => record._id}
-        pagination={{ pageSize: 10 }}
+        pagination={{ pageSize: 5 }}
       />
     </>
   );

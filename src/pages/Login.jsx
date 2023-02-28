@@ -1,40 +1,45 @@
-import { Button, Form, Input } from "antd";
+import { Button, Form, Input, message } from "antd";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../service/api.user";
-import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-hot-toast";
+import { useSelector } from "react-redux";
 import Cookies from "universal-cookie";
+const onFinishFailed = (errorInfo) => {
+  console.log("Failed:", errorInfo);
+};
 const Login = () => {
-  const { token, isAuthenticated } = useSelector((state) => state.user);
-  const [login, { isLoading }] = useLoginMutation();
+  const { isAuthenticated } = useSelector((state) => state.user);
+  const [login, { isLoading, isError, error, isSuccess }] = useLoginMutation();
   const navigate = useNavigate();
   const cookies = new Cookies();
-  const onFinishFailed = (errorInfo) => {
-    console.log("Failed:", errorInfo);
-  };
-
   const onFinish = (values) => {
     login(values)
       .unwrap()
       .then((res) => {
         cookies.set("token", res.accessToken, {
           path: "/",
-          expires: new Date(Date.now() + 259200),
+          expires: new Date(
+            new Date(new Date()).setDate(new Date().getDate() + 3)
+          ),
         });
       })
       .catch((err) => {
-        console.error(err);
-        toast.error("Failed to login");
+        console.log(err);
       });
   };
-
   useEffect(() => {
     if (isAuthenticated === true) {
       navigate("/users");
     }
-  }, [isAuthenticated]);
+
+    if (isError) {
+      message.error(error.data);
+    }
+    if (isSuccess) {
+      message.success("Logged in successfully!");
+    }
+  }, [isAuthenticated, isSuccess, isError]);
   return (
     <>
       <div className="relative w-screen h-screen">
